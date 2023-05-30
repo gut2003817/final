@@ -6,7 +6,7 @@
 <body>
     <h1>簡易記帳</h1>
     
-    <form method="POST" action="/add_expense">
+    <form method="POST" action="/expense">
         <label for="category">分類:</label>
         <select id="category" name="category">
             <option value="食">食</option>
@@ -19,8 +19,8 @@
         
         <br><br>
         
-        <label for="description">備註:</label>
-        <input type="text" id="description" name="description">
+        <label for="note">備註:</label>
+        <input type="text" id="note" name="note">
         
         <br><br>
         
@@ -40,8 +40,9 @@
     <h3>記帳紀錄:</h3>
     <ul>
         {% for expense in expenses %}
-            <li>{{ expense.category }} - {{ expense.description }} - {{ expense.amount }}</li>
+            <li>{{ expense.category }} - {{ expense.note }} - {{ expense.amount }}</li>
         {% endfor %}
     </ul>
 </body>
 </html>
+
