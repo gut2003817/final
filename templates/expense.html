@@ -40,7 +40,7 @@
     <h3>記帳紀錄:</h3>
     <ul>
         {% for expense in expenses %}
-            <li>{{ expense.category }} - {{ expense.note }} - {{ expense.amount }}</li>
+    <li>{{ expense[2] }} - {{ expense[4] }} - {{ expense[3] }}</li>
         {% endfor %}
     </ul>
 </body>

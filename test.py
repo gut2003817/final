@@ -127,12 +127,12 @@ def expense():
         cursor.execute('SELECT * FROM expenses WHERE username = ?', (session['username'],))
         expenses = cursor.fetchall()
 
-    # 打印调试信息
-    print('Expenses:', expenses)
+        # 打印调试信息
+        print('Expenses:', expenses)
 
-    # 計算月總額和損益
-    total_amount = sum(expense[3] for expense in expenses)
-    profit_loss = calculate_profit_loss(expenses)
+        # 計算月總額和損益
+        total_amount = sum(expense[3] for expense in expenses)
+        profit_loss = calculate_profit_loss(expenses)
 
     return render_template('expense.html', expenses=expenses, total_amount=total_amount, profit_loss=profit_loss)
 
