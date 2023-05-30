@@ -7,15 +7,25 @@
     <h1>簡易記帳</h1>
     
     <form method="POST" action="/expense">
-        <label for="category">分類:</label>
-        <select id="category" name="category">
-            <option value="食">食</option>
-            <option value="衣">衣</option>
-            <option value="住">住</option>
-            <option value="行">行</option>
-            <option value="育">育</option>
-            <option value="樂">樂</option>
+        <label for="record_type">類型:</label>
+        <select id="record_type" name="record_type">
+            <option value="income">收入</option>
+            <option value="expense">支出</option>
         </select>
+        
+        <br><br>
+    
+        <div id="category_div" style="display: none;">
+            <label for="category">分類:</label>
+            <select id="category" name="category">
+                <option value="食">食</option>
+                <option value="衣">衣</option>
+                <option value="住">住</option>
+                <option value="行">行</option>
+                <option value="育">育</option>
+                <option value="樂">樂</option>
+            </select>
+        </div>
         
         <br><br>
         
@@ -28,17 +38,10 @@
         <input type="number" id="amount" name="amount">
         
         <br><br>
-
-        <label for="record_type">類型:</label>
-        <select id="record_type" name="record_type">
-            <option value="expense">支出</option>
-            <option value="income">收入</option>
-        </select>
-        
-        <br><br>
         
         <input type="submit" value="新增">
     </form>
+
     
     <br>
     
@@ -49,12 +52,25 @@
     <ul>
         {% for expense in expenses %}
             {% if expense[3] >= 0 %}
-                <li>種類：{{ expense[2] }}&nbsp;&nbsp;&nbsp;&nbsp;金額：{{ expense[3] }}&nbsp;&nbsp;&nbsp;&nbsp;備註：{{ expense[4] }}&nbsp;&nbsp;&nbsp;&nbsp;（收入）</li>
+                <li>日期：{{ expense[5] }}（收）&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;金額：{{ expense[3] }}&nbsp;&nbsp;&nbsp;&nbsp;備註：{{ expense[4] }}</li>
             {% else %}
-                <li>種類：{{ expense[2] }}&nbsp;&nbsp;&nbsp;&nbsp;金額：{{ expense[3]|abs }}&nbsp;&nbsp;&nbsp;&nbsp;備註：{{ expense[4] }}&nbsp;&nbsp;&nbsp;&nbsp;（支出）</li>
+                <li>日期：{{ expense[5] }}（支）種類：{{ expense[2] }}&nbsp;&nbsp;&nbsp;&nbsp;金額：{{ expense[3]|abs }}&nbsp;&nbsp;&nbsp;&nbsp;備註：{{ expense[4] }}</li>
             {% endif %}
         {% endfor %}
     </ul>
+    
+    <script>
+        // JavaScript 部分：根據選擇的類型，顯示或隱藏種類選項
+        var recordTypeSelect = document.getElementById("record_type");
+        var categoryDiv = document.getElementById("category_div");
+
+        recordTypeSelect.addEventListener("change", function() {
+            if (recordTypeSelect.value === "expense") {
+                categoryDiv.style.display = "block";
+            } else {
+                categoryDiv.style.display = "none";
+            }
+        });
+    </script>
 </body>
 </html>
-

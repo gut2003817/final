@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, session
 import sqlite3
+from datetime import date
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
@@ -37,11 +38,13 @@ def create_expenses_table():
     conn = create_connection()
     cursor = conn.cursor()
     cursor.execute('''CREATE TABLE IF NOT EXISTS expenses
-                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                       username TEXT NOT NULL,
-                       category TEXT NOT NULL,
-                       amount REAL NOT NULL,
-                       note TEXT)''')
+                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                   username TEXT NOT NULL,
+                   category TEXT NOT NULL,
+                   amount REAL NOT NULL,
+                   note TEXT,
+                   date TEXT NOT NULL)''')
+
     conn.commit()
     conn.close()
 
@@ -109,7 +112,7 @@ def expense():
         note = request.form['note']
         amount = float(request.form['amount'])
         record_type = request.form['record_type']  # 新增的記錄類型欄位
-
+        date_today = date.today().strftime("%Y/%m/%d")  # 取得當天日期
         # 根據記錄類型設置金額正負號
         if record_type == 'income':
             amount = abs(amount)
@@ -119,14 +122,15 @@ def expense():
         # 將記帳資訊儲存到資料庫，這裡使用SQLite作為範例
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
-            cursor.execute('INSERT INTO expenses (username, category, note, amount) VALUES (?, ?, ?, ?)',
-                           (session['username'], category, note, amount))
+            cursor.execute('INSERT INTO expenses (username, category, note, amount, date) VALUES (?, ?, ?, ?, ?)',
+                           (session['username'], category, note, amount,date_today))
             conn.commit()
 
             # 打印调试信息
         print('Category:', category)
         print('Note:', note)
         print('Amount:', amount)
+        print('Date:', date_today)
 
     # 從資料庫中獲取使用者的所有記帳資料
     with sqlite3.connect('database.db') as conn:
