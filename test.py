@@ -144,6 +144,10 @@ def expense():
         # 計算月總額和損益
         total_amount = sum(expense[3] for expense in expenses)
         profit_loss = calculate_profit_loss(expenses)
+        # 排序支出記錄
+        category = request.args.get('category')  # 從URL參數獲取用戶選擇的分類
+        if category:
+            expenses = sorted(expenses, key=lambda x: x[2] if x[2] == category else '')
 
     return render_template('expense.html', expenses=expenses, total_amount=total_amount, profit_loss=profit_loss)
 
@@ -178,6 +182,11 @@ def calculate_profit_loss(expenses_data):
     income = sum(expense[3] for expense in expenses_data if expense[3] >= 0)
     expenses = sum(expense[3] for expense in expenses_data if expense[3] < 0)
     return income - abs(expenses)
+
+# 路由：進階功能頁面
+@app.route('/advanced')
+def advanced():
+    return render_template('advanced.html')
 
 # 路由：使用者登出
 @app.route('/logout')
