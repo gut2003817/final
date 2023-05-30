@@ -183,10 +183,26 @@ def calculate_profit_loss(expenses_data):
     expenses = sum(expense[3] for expense in expenses_data if expense[3] < 0)
     return income - abs(expenses)
 
-# 路由：進階功能頁面
+# 路由：進階功能
 @app.route('/advanced')
 def advanced():
-    return render_template('advanced.html')
+    if 'username' not in session:
+        return redirect('/login')
+
+    # 從資料庫中獲取使用者的所有支出資料
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT category, ABS(SUM(amount)) '
+                       'FROM expenses WHERE username = ? AND amount < 0 '
+                       'GROUP BY category '
+                       'HAVING SUM(amount) < 0',
+                       (session['username'],))
+        categorized_expenses = cursor.fetchall()
+
+    # 按照金額從高到低對類別支出進行排序
+    categorized_expenses = sorted(categorized_expenses, key=lambda x: x[1], reverse=True)
+
+    return render_template('advanced.html', categorized_expenses=categorized_expenses)
 
 # 路由：使用者登出
 @app.route('/logout')
@@ -195,4 +211,4 @@ def logout():
     return redirect('/homepage')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0",port=5001)
