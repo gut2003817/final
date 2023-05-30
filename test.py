@@ -17,9 +17,9 @@ def homepage():
     return render_template('index.html')
 
 # 路由：使用者註冊
+# 路由：使用者註冊
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    # 路由：使用者註冊
     if request.method == 'POST':
         # 從表單獲取使用者註冊資訊
         username = request.form['username']
@@ -38,11 +38,10 @@ def register():
             cursor.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, password))
             conn.commit()
             
-            # 註冊成功，轉到登入頁面
-            return redirect('/login')
+            # 註冊成功，轉到註冊成功頁面，並傳遞訊息變數
+            return render_template('registration_success.html', message='註冊成功')
     
     return render_template('register.html')
-
 # 路由：使用者登入
 @app.route('/login', methods=['GET', 'POST'])
 def login():
