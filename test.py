@@ -108,11 +108,13 @@ def expense():
         category = request.form['category']
         note = request.form['note']
         amount = float(request.form['amount'])
+        record_type = request.form['record_type']  # 新增的記錄類型欄位
 
-        # 打印调试信息
-        print('Category:', category)
-        print('Note:', note)
-        print('Amount:', amount)
+        # 根據記錄類型設置金額正負號
+        if record_type == 'income':
+            amount = abs(amount)
+        else:
+            amount = -abs(amount)
 
         # 將記帳資訊儲存到資料庫，這裡使用SQLite作為範例
         with sqlite3.connect('database.db') as conn:
@@ -120,6 +122,11 @@ def expense():
             cursor.execute('INSERT INTO expenses (username, category, note, amount) VALUES (?, ?, ?, ?)',
                            (session['username'], category, note, amount))
             conn.commit()
+
+            # 打印调试信息
+        print('Category:', category)
+        print('Note:', note)
+        print('Amount:', amount)
 
     # 從資料庫中獲取使用者的所有記帳資料
     with sqlite3.connect('database.db') as conn:
@@ -160,20 +167,19 @@ def report():
     print('Total Amount:', total_amount)
     print('Income:', income)
     print('Expense:', expense)
-
     return render_template('report.html', expenses=expenses, total_amount=total_amount, income=income, expense=expense)
-
-# 路由：使用者登出
-@app.route('/logout')
-def logout():
-    session.pop('username', None)
-    return redirect('/homepage')
 
 # 計算損益
 def calculate_profit_loss(expenses_data):
     income = sum(expense[3] for expense in expenses_data if expense[3] >= 0)
     expenses = sum(expense[3] for expense in expenses_data if expense[3] < 0)
     return income - abs(expenses)
+
+# 路由：使用者登出
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    return redirect('/homepage')
 
 if __name__ == '__main__':
     app.run(debug=True)
