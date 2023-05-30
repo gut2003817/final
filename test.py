@@ -14,7 +14,7 @@ def index():
 
 @app.route('/homepage')
 def homepage():
-    return render_template('index.html')
+    return render_template('index.html') 
 
 import sqlite3
 
@@ -36,6 +36,23 @@ def create_users_table():
 
 # 執行資料表建立
 create_users_table()
+
+# 在資料庫中建立記帳資料表
+def create_expenses_table():
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS expenses
+                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                       username TEXT NOT NULL,
+                       category TEXT NOT NULL,
+                       amount REAL NOT NULL,
+                       note TEXT)''')
+    conn.commit()
+    conn.close()
+
+# 執行資料表建立
+create_users_table()
+create_expenses_table()
 
 # 路由：使用者註冊
 @app.route('/register', methods=['GET', 'POST'])
@@ -62,6 +79,7 @@ def register():
             return render_template('registration_success.html', message='註冊成功')
     
     return render_template('register.html')
+    
 # 路由：使用者登入
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -86,11 +104,66 @@ def login():
     
     return render_template('login.html')
 
+# 路由：記帳頁面
+# 路由：記帳頁面
+@app.route('/expense', methods=['GET', 'POST'])
+def expense():
+    if 'username' not in session:
+        return redirect('/login')
+
+    if request.method == 'POST':
+        # 從表單獲取記帳資訊
+        category = request.form['category']
+        amount = request.form['amount']
+        note = request.form['note']
+
+        # 將記帳資訊儲存到資料庫，這裡使用SQLite作為範例
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute('INSERT INTO expenses (username, category, amount, note) VALUES (?, ?, ?, ?)',
+                           (session['username'], category, amount, note))
+            conn.commit()
+
+    # 從資料庫中獲取使用者的所有記帳資料
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM expenses WHERE username = ?', (session['username'],))
+        expenses = cursor.fetchall()
+
+    return render_template('expense.html', expenses=expenses)
+
+
+# 路由：統計報表
+@app.route('/report')
+def report():
+    # if 'username' not in session:
+    #     return redirect('/login')
+    
+    # 從資料庫中獲取使用者的所有記帳資料
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM expenses WHERE username = ?', (session['username'],))
+        expenses = cursor.fetchall()
+    
+    # 計算月總額和損益
+    total_amount = sum(expense[3] for expense in expenses)
+    income = 0
+    expense = 0
+    
+    for expense in expenses:
+        if expense[3] >= 0:
+            income += expense[3]
+        else:
+            expense += expense[3]
+    
+    return render_template('report.html', expenses=expenses, total_amount=total_amount, income=income, expense=expense)
+
+
 # 路由：使用者登出
 @app.route('/logout')
 def logout():
     session.pop('username', None)
-    return redirect('/login')
+    return redirect('/homepage')
 
 if __name__ == '__main__':
     app.run(debug=True)

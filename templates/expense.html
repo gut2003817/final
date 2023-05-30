@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>簡易記帳</title>
+</head>
+<body>
+    <h1>簡易記帳</h1>
+    
+    <form method="POST" action="/add_expense">
+        <label for="category">分類:</label>
+        <select id="category" name="category">
+            <option value="食">食</option>
+            <option value="衣">衣</option>
+            <option value="住">住</option>
+            <option value="行">行</option>
+            <option value="育">育</option>
+            <option value="樂">樂</option>
+        </select>
+        
+        <br><br>
+        
+        <label for="description">備註:</label>
+        <input type="text" id="description" name="description">
+        
+        <br><br>
+        
+        <label for="amount">金額:</label>
+        <input type="number" id="amount" name="amount">
+        
+        <br><br>
+        
+        <input type="submit" value="新增">
+    </form>
+    
+    <br>
+    
+    <h2>月總額: {{ total_amount }}</h2>
+    <h2>損益: {{ profit_loss }}</h2>
+    
+    <h3>記帳紀錄:</h3>
+    <ul>
+        {% for expense in expenses %}
+            <li>{{ expense.category }} - {{ expense.description }} - {{ expense.amount }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>統計報表</title>
+</head>
+<body>
+    <h1>統計報表</h1>
+    <h2>記帳資料</h2>
+    <table>
+        <tr>
+            <th>日期</th>
+            <th>分類</th>
+            <th>金額</th>
+            <th>備註</th>
+        </tr>
+        {% for expense in expenses %}
+        <tr>
+            <td>{{ expense[1] }}</td>
+            <td>{{ expense[2] }}</td>
+            <td>{{ expense[3] }}</td>
+            <td>{{ expense[4] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <h2>統計數據</h2>
+    <p>總金額：{{ total_amount }}</p>
+    <p>收入：{{ income }}</p>
+    <p>支出：{{ expense }}</p>
+    <a href="/logout">登出</a>
+</body>
+</html>
