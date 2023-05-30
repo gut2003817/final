@@ -16,7 +16,27 @@ def index():
 def homepage():
     return render_template('index.html')
 
-# 路由：使用者註冊
+import sqlite3
+
+# 建立資料庫連線
+def create_connection():
+    conn = sqlite3.connect('database.db')
+    return conn
+
+# 在資料庫中建立使用者資料表
+def create_users_table():
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS users
+                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                       username TEXT NOT NULL,
+                       password TEXT NOT NULL)''')
+    conn.commit()
+    conn.close()
+
+# 執行資料表建立
+create_users_table()
+
 # 路由：使用者註冊
 @app.route('/register', methods=['GET', 'POST'])
 def register():
