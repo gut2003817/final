@@ -10,7 +10,11 @@ def index():
     if 'username' in session:
         return render_template('welcome.html', username=session['username'])
     else:
-        return redirect('/login')
+        return redirect('/homepage')
+
+@app.route('/homepage')
+def homepage():
+    return render_template('index.html')
 
 # 路由：使用者註冊
 @app.route('/register', methods=['GET', 'POST'])
