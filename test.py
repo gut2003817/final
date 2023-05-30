@@ -199,10 +199,17 @@ def advanced():
                        (session['username'],))
         categorized_expenses = cursor.fetchall()
 
+        # 總支出金額
+        total_expenses = sum(expense[1] for expense in categorized_expenses)
+
+        # 計算支出類別佔比
+        categorized_expenses = [(expense[0], expense[1], round(expense[1] / total_expenses * 100,2)) for expense in categorized_expenses]
+
     # 按照金額從高到低對類別支出進行排序
     categorized_expenses = sorted(categorized_expenses, key=lambda x: x[1], reverse=True)
 
     return render_template('advanced.html', categorized_expenses=categorized_expenses)
+
 
 # 路由：使用者登出
 @app.route('/logout')

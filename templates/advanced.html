@@ -2,7 +2,6 @@
 <html>
 <head>
     <title>進階功能</title>
-    <!-- 在此處添加所需的CSS和JavaScript檔案 -->
     <style>
         .expense-table {
             width: 100%;
@@ -24,13 +23,15 @@
             <tr>
                 <th>類別</th>
                 <th>總金額</th>
+                <th>支出佔比<th>
             </tr>
         </thead>
         <tbody>
-            {% for category, total_amount in categorized_expenses %}
+            {% for category, total_amount, proportion in categorized_expenses %}
             <tr>
                 <td>{{ category }}</td>
                 <td>{{ total_amount }}</td>
+                <td>{{ proportion }}<td>
             </tr>
             {% endfor %}
         </tbody>
