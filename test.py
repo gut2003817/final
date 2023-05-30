@@ -19,18 +19,27 @@ def homepage():
 # 路由：使用者註冊
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    # 路由：使用者註冊
     if request.method == 'POST':
         # 從表單獲取使用者註冊資訊
         username = request.form['username']
         password = request.form['password']
         
-        # 將使用者資訊儲存到資料庫，這裡使用SQLite作為範例
+        # 檢查帳號是否已存在於資料庫
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
+            cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
+            existing_user = cursor.fetchone()
+            
+            if existing_user:
+                return render_template('register.html', message='帳號已存在')
+            
+            # 將使用者資訊儲存到資料庫
             cursor.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, password))
             conn.commit()
-        
-        return redirect('/login')
+            
+            # 註冊成功，轉到登入頁面
+            return redirect('/login')
     
     return render_template('register.html')
 
