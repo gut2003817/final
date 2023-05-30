@@ -4,7 +4,7 @@ import sqlite3
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
 
-# 路由：首頁
+# 路由：首頁 nn
 @app.route('/')
 def index():
     if 'username' in session:
