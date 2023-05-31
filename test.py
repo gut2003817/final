@@ -112,7 +112,7 @@ def expense():
         note = request.form['note']
         amount = float(request.form['amount'])
         record_type = request.form['record_type']  # 新增的記錄類型欄位
-        date_today = date.today().strftime("%Y/%m/%d")  # 取得當天日期
+        date_today = request.form['date']   # 取得選擇日期
         # 根據記錄類型設置金額正負號
         if record_type == 'income':
             amount = abs(amount)
@@ -135,7 +135,7 @@ def expense():
     # 從資料庫中獲取使用者的所有記帳資料
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM expenses WHERE username = ?', (session['username'],))
+        cursor.execute('SELECT * FROM expenses WHERE username = ? ORDER BY date', (session['username'],))
         expenses = cursor.fetchall()
 
         # 打印调试信息
@@ -160,7 +160,7 @@ def report():
     # 從資料庫中獲取使用者的所有記帳資料
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM expenses WHERE username = ?', (session['username'],))
+        cursor.execute('SELECT * FROM expenses WHERE username = ? ORDER BY date(date)', (session['username'],))
         expenses = cursor.fetchall()
 
     # 打印调试信息
