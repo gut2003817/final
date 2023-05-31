@@ -111,9 +111,14 @@ def expense():
         category = request.form['category']
         note = request.form['note']
         amount = float(request.form['amount'])
+<<<<<<< HEAD
         record_type = request.form['record_type']
         date_today = date.today().strftime("%Y/%m/%d")
         budget = request.form.get('budget')
+=======
+        record_type = request.form['record_type']  # 新增的記錄類型欄位
+        date_today = request.form['date']   # 取得選擇日期
+>>>>>>> b15ed76b185eaef69971d03f660823b68b311c48
         # 根據記錄類型設置金額正負號
         if record_type == 'income':
             amount = abs(amount)
@@ -136,7 +141,7 @@ def expense():
     # 從資料庫中獲取使用者的所有記帳資料
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM expenses WHERE username = ?', (session['username'],))
+        cursor.execute('SELECT * FROM expenses WHERE username = ? ORDER BY date', (session['username'],))
         expenses = cursor.fetchall()
 
         # 打印调试信息
@@ -166,6 +171,29 @@ def expense():
 
     return render_template('expense.html', expenses=expenses, total_amount=total_amount, profit_loss=profit_loss, budget=budget)
 
+# 路由: 編輯記帳項目
+@app.route('/edit_expense/<int:expense_id>', methods=['GET', 'POST'])
+def edit_expense(expense_id):
+    if request.method == 'POST':
+        category = request.form['category']
+        note = request.form['note']
+        amount = float(request.form['amount'])
+        date_today = request.form['date']
+
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute('UPDATE expenses SET category = ?, note = ?, amount = ?, date = ? WHERE id = ?',
+                           (category, note, amount, date_today, expense_id))
+            conn.commit()
+            return redirect('/expense')
+    else:
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM expenses WHERE id = ?', (expense_id,))
+            expense = cursor.fetchone()
+        return render_template('edit.html', expense=expense)
+
+
 # 路由：統計報表
 @app.route('/report')
 def report():
@@ -175,7 +203,7 @@ def report():
     # 從資料庫中獲取使用者的所有記帳資料
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM expenses WHERE username = ?', (session['username'],))
+        cursor.execute('SELECT * FROM expenses WHERE username = ? ORDER BY date(date)', (session['username'],))
         expenses = cursor.fetchall()
 
     # 打印调试信息
