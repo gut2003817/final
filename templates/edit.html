@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>編輯記帳項目</title>
+</head>
+<body>
+    <h1>編輯記帳項目</h1>
+    <form action="/edit_expense/{{ expense[0] }}" method="POST">
+        <label for="category">分類：</label>
+        <input type="text" name="category" id="category" value="{{ expense[2] }}" required><br>
+
+        <label for="note">備註：</label>
+        <input type="text" name="note" id="note" value="{{ expense[4] }}"><br>
+
+        <label for="amount">金額：</label>
+        <input type="number" name="amount" id="amount" value="{{ expense[3] }}" step="0.01" required><br>
+
+        <label for="date">日期：</label>
+        <input type="date" name="date" id="date" value="{{ expense[5] }}" required><br>
+
+        <input type="submit" value="儲存">
+    </form>
+</body>
+</html>

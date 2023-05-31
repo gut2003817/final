@@ -151,6 +151,29 @@ def expense():
 
     return render_template('expense.html', expenses=expenses, total_amount=total_amount, profit_loss=profit_loss)
 
+# 路由: 編輯記帳項目
+@app.route('/edit_expense/<int:expense_id>', methods=['GET', 'POST'])
+def edit_expense(expense_id):
+    if request.method == 'POST':
+        category = request.form['category']
+        note = request.form['note']
+        amount = float(request.form['amount'])
+        date_today = request.form['date']
+
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute('UPDATE expenses SET category = ?, note = ?, amount = ?, date = ? WHERE id = ?',
+                           (category, note, amount, date_today, expense_id))
+            conn.commit()
+            return redirect('/expense')
+    else:
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM expenses WHERE id = ?', (expense_id,))
+            expense = cursor.fetchone()
+        return render_template('edit.html', expense=expense)
+
+
 # 路由：統計報表
 @app.route('/report')
 def report():

@@ -54,9 +54,9 @@
     <ul>
         {% for expense in expenses %}
             {% if expense[3] >= 0 %}
-                <li>日期：{{ expense[5] }}（收）&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;金額：{{ expense[3] }}&nbsp;&nbsp;&nbsp;&nbsp;備註：{{ expense[4] }}</li>
+                <li>日期：{{ expense[5] }}（收）&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;金額：{{ expense[3] }}&nbsp;&nbsp;&nbsp;&nbsp;備註：{{ expense[4] }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/edit_expense/{{ expense[0] }}">點一下編輯</a></li>
             {% else %}
-                <li>日期：{{ expense[5] }}（支）種類：{{ expense[2] }}&nbsp;&nbsp;&nbsp;&nbsp;金額：{{ expense[3]|abs }}&nbsp;&nbsp;&nbsp;&nbsp;備註：{{ expense[4] }}</li>
+                <li>日期：{{ expense[5] }}（支）種類：{{ expense[2] }}&nbsp;&nbsp;&nbsp;&nbsp;金額：{{ expense[3]|abs }}&nbsp;&nbsp;&nbsp;&nbsp;備註：{{ expense[4] }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/edit_expense/{{ expense[0] }}">點一下編輯</a></li>
             {% endif %}
         {% endfor %}
     </ul>
