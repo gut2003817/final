@@ -23,7 +23,7 @@
             <tr>
                 <th>類別</th>
                 <th>總金額</th>
-                <th>支出佔比<th>
+                <th>支出佔比</th>
             </tr>
         </thead>
         <tbody>
@@ -31,18 +31,23 @@
             <tr>
                 <td>{{ category }}</td>
                 <td>{{ total_amount }}</td>
-                <td>{{ proportion }}<td>
+                <td>{{ proportion }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
     <h2>設定必要支出預算</h2>
-    <form action="/set_budget" method="POST">
-        <label for="budget">預算金額：</label>
-        <input type="number" id="budget" name="budget" step="0.01" required>
-        <button type="submit">設定</button>
+    <form action="/advanced" method="POST">
+        {% for category in all_categories %}
+        <label for="budget_{{ category }}">類別：{{ category }}，預算金額：</label>
+        <input type="number" id="budget_{{ category }}" name="budget_{{ category }}" step="0.01" value="{{ category_budgets.get(category) }}" required>
+        <br>
+        {% endfor %}
+        <button type="submit" name="set_budget">設定</button>
     </form>
+    
+    
 
     <h2>即將超支警示訊息</h2>
     {% if is_budget_exceeded %}
@@ -53,7 +58,6 @@
 
     <h2>共同編輯功能</h2>
     <p>這裡是共同編輯功能的介紹和操作說明。</p>
-    <a href="/expense"><h4>返回<h4><a>
-
+    <a href="/expense"><h4>返回</h4></a>
 </body>
 </html>

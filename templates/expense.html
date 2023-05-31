@@ -47,6 +47,10 @@
     
     <h2>月總額: {{ total_amount }}</h2>
     <h2>損益: {{ profit_loss }}</h2>
+    {% if budget %}
+    <label for="budget">預算金額：{{ budget }}</label>
+    <br>
+    {% endif %}
     
     <h3>記帳紀錄:</h3>
     <ul>

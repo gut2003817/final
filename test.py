@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask,flash, render_template, request, redirect, session
 import sqlite3
 from datetime import date
 
@@ -43,8 +43,8 @@ def create_expenses_table():
                    category TEXT NOT NULL,
                    amount REAL NOT NULL,
                    note TEXT,
-                   date TEXT NOT NULL)''')
-
+                   date TEXT NOT NULL,
+                   budget REAL DEFAULT 0)''')
     conn.commit()
     conn.close()
 
@@ -111,8 +111,9 @@ def expense():
         category = request.form['category']
         note = request.form['note']
         amount = float(request.form['amount'])
-        record_type = request.form['record_type']  # 新增的記錄類型欄位
-        date_today = date.today().strftime("%Y/%m/%d")  # 取得當天日期
+        record_type = request.form['record_type']
+        date_today = date.today().strftime("%Y/%m/%d")
+        budget = request.form.get('budget')
         # 根據記錄類型設置金額正負號
         if record_type == 'income':
             amount = abs(amount)
@@ -122,8 +123,8 @@ def expense():
         # 將記帳資訊儲存到資料庫，這裡使用SQLite作為範例
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
-            cursor.execute('INSERT INTO expenses (username, category, note, amount, date) VALUES (?, ?, ?, ?, ?)',
-                           (session['username'], category, note, amount,date_today))
+            cursor.execute('INSERT INTO expenses (username, category, note, amount, date, budget) VALUES (?, ?, ?, ?, ?, ?)',
+                           (session['username'], category, note, amount,date_today, budget))
             conn.commit()
 
             # 打印调试信息
@@ -149,7 +150,21 @@ def expense():
         if category:
             expenses = sorted(expenses, key=lambda x: x[2] if x[2] == category else '')
 
-    return render_template('expense.html', expenses=expenses, total_amount=total_amount, profit_loss=profit_loss)
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT budget FROM expenses WHERE username = ? AND budget IS NOT NULL', (session['username'],))
+        budget_result = cursor.fetchone()
+        budget = budget_result[0] if budget_result else None
+
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute('PRAGMA table_info(expenses)')  # 獲取資料表結構
+        columns = [column[1] for column in cursor.fetchall()]
+
+        if 'category' not in columns:
+            cursor.execute('ALTER TABLE expenses ADD COLUMN category TEXT')  # 添加 category 欄位
+
+    return render_template('expense.html', expenses=expenses, total_amount=total_amount, profit_loss=profit_loss, budget=budget)
 
 # 路由：統計報表
 @app.route('/report')
@@ -184,16 +199,48 @@ def calculate_profit_loss(expenses_data):
     return income - abs(expenses)
 
 # 路由：進階功能
-@app.route('/advanced')
+@app.route('/advanced', methods=['GET', 'POST'])
 def advanced():
     if 'username' not in session:
         return redirect('/login')
 
+    if request.method == 'POST':
+        if 'set_budget' in request.form:
+            set_budget(request.form)
+
+    # 獲取支出類別佔比及預算數值
+    categorized_expenses, category_budgets = get_expenses_and_budgets()
+    all_categories = [expense[0] for expense in categorized_expenses]
+
+    return render_template('advanced.html', categorized_expenses=categorized_expenses, category_budgets=category_budgets, all_categories=all_categories)
+
+# 設定預算的函式
+def set_budget(form_data):
+    # 從表單中獲取每個類別的預算數值
+    category_budgets = {}
+    for key, value in form_data.items():
+        if key.startswith('budget_'):
+            category = key.split('_')[1]
+            budget = float(value)
+            category_budgets[category] = budget
+
+    # 將預算存儲到資料庫中，關聯到當前使用者
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        for category, budget in category_budgets.items():
+            cursor.execute('UPDATE expenses SET budget = ? WHERE username = ? AND category = ?', (budget, session['username'], category))
+        conn.commit()
+
+    flash('預算已設定成功！')
+
+# 獲取支出類別佔比及預算數值的函式
+def get_expenses_and_budgets():
     # 從資料庫中獲取使用者的所有支出資料
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
         cursor.execute('SELECT category, ABS(SUM(amount)) '
-                       'FROM expenses WHERE username = ? AND amount < 0 '
+                       'FROM expenses '
+                       'WHERE username = ? AND amount < 0 '
                        'GROUP BY category '
                        'HAVING SUM(amount) < 0',
                        (session['username'],))
@@ -202,13 +249,34 @@ def advanced():
         # 總支出金額
         total_expenses = sum(expense[1] for expense in categorized_expenses)
 
-        # 計算支出類別佔比
-        categorized_expenses = [(expense[0], expense[1], round(expense[1] / total_expenses * 100,2)) for expense in categorized_expenses]
+    # 從資料庫中獲取使用者的支出類別及預算數值
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
 
-    # 按照金額從高到低對類別支出進行排序
-    categorized_expenses = sorted(categorized_expenses, key=lambda x: x[1], reverse=True)
+        # 獲取所有類別
+        all_categories = ['食', '衣', '住', '行', '育', '樂']
 
-    return render_template('advanced.html', categorized_expenses=categorized_expenses)
+        # 準備 SQL 查詢的參數
+        query_params = [session['username']] + all_categories
+
+        # 產生 SQL 查詢的佔位符
+        placeholders = ','.join(['?'] * len(all_categories))
+
+        # 查詢使用者的支出類別及預算數值
+        query = f"SELECT category, budget FROM expenses WHERE username = ? AND category IN ({placeholders})"
+        cursor.execute(query, query_params)
+        category_budgets = dict(cursor.fetchall())
+
+    # 處理未出現在支出紀錄中的類別
+    missing_categories = set(all_categories) - set([expense[0] for expense in categorized_expenses])
+    for category in missing_categories:
+        category_budgets[category] = 0
+
+    # 計算支出類別佔比
+    categorized_expenses = [(expense[0], expense[1], round(expense[1] / total_expenses * 100, 2)) for expense in categorized_expenses]
+
+    return categorized_expenses, category_budgets
+
 
 
 # 路由：使用者登出
@@ -218,4 +286,4 @@ def logout():
     return redirect('/homepage')
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0",port=5001)
+    app.run(debug=True)
