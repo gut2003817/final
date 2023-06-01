@@ -58,13 +58,36 @@
     <ul>
         {% for expense in expenses %}
             {% if expense[3] >= 0 %}
-                <li>日期：{{ expense[5] }}（收）&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;金額：{{ expense[3] }}&nbsp;&nbsp;&nbsp;&nbsp;備註：{{ expense[4] }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/edit_expense/{{ expense[0] }}">編輯</a>&nbsp;&nbsp;&nbsp;<a href="/delete_expense/{{ expense[0] }}">刪除</a></li>
+                <li>日期：{{ expense[5] }}（收）&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;金額：{{ expense[3] }}&nbsp;&nbsp;&nbsp;&nbsp;備註：{{ expense[4] }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button type="button" onclick="editExpense({{ expense[0] }})">編輯</button>&nbsp;&nbsp;&nbsp;<button type="submit"  onclick="deleteExpense({{ expense[0] }})">刪除</button></li>
             {% else %}
-                <li>日期：{{ expense[5] }}（支）種類：{{ expense[2] }}&nbsp;&nbsp;&nbsp;&nbsp;金額：{{ expense[3]|abs }}&nbsp;&nbsp;&nbsp;&nbsp;備註：{{ expense[4] }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/edit_expense/{{ expense[0] }}">編輯</a><a href="/delete_expense/{{ expense[0] }}">刪除</a></li>
+                <li>日期：{{ expense[5] }}（支）種類：{{ expense[2] }}&nbsp;&nbsp;&nbsp;&nbsp;金額：{{ expense[3]|abs }}&nbsp;&nbsp;&nbsp;&nbsp;備註：{{ expense[4] }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button type="button" onclick="editExpense({{ expense[0] }})">編輯</button>&nbsp;&nbsp;&nbsp;<button type="submit" onclick="deleteExpense({{ expense[0] }})">刪除</button>
+                </li></li>
             {% endif %}
         {% endfor %}
     </ul>
     
+    <script>
+        function editExpense(expenseId) {
+            // 導航到編輯頁面
+            window.location.href = "/edit_expense/" + expenseId;
+        }
+    </script>
+    
+
+    <script>
+        function deleteExpense(expenseId) {
+            if (confirm("確定要刪除該筆記帳紀錄嗎？")) {
+                // 提交表單到 `/delete_expense/<expense_id>` 路由
+                var form = document.createElement("form");
+                form.method = "POST";
+                form.action = "/delete_expense/" + expenseId;
+
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
+
     <script>
         // JavaScript 部分：根據選擇的類型，顯示或隱藏種類選項
         var recordTypeSelect = document.getElementById("record_type");
@@ -78,7 +101,7 @@
             }
         });
     </script>
-    <a href="/advanced"><h3>進階功能<h3><a>
-    <a href="/logout"><h6>登出<h6></a>
+    <a href="/advanced"><h3>進階功能</h3><a>
+    <a href="/logout"><h6>登出</h6></a>
 </body>
 </html>
