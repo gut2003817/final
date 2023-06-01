@@ -188,6 +188,14 @@ def edit_expense(expense_id):
             expense = cursor.fetchone()
         return render_template('edit.html', expense=expense)
 
+@app.route('/delete_expense/<int:expense_id>', methods=['GET', 'POST'])
+def delete_expense(expense_id):
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM expenses WHERE id = ?', (expense_id,))
+        conn.commit()
+    return redirect('/expense')
+
 
 # 路由：統計報表
 @app.route('/report')
