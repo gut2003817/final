@@ -13,14 +13,17 @@ def index():
     else:
         return redirect('/homepage')
 
+
 @app.route('/homepage')
 def homepage():
     return render_template('index.html')
+
 
 # 建立資料庫連線
 def create_connection():
     conn = sqlite3.connect('database.db')
     return conn
+
 
 # 在資料庫中建立使用者資料表
 def create_users_table():
@@ -32,6 +35,7 @@ def create_users_table():
                        password TEXT NOT NULL)''')
     conn.commit()
     conn.close()
+
 
 # 在資料庫中建立記帳資料表
 def create_expenses_table():
@@ -47,6 +51,7 @@ def create_expenses_table():
                    budget REAL DEFAULT 0)''')
     conn.commit()
     conn.close()
+
 
 # 執行資料表建立
 create_users_table()
