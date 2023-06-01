@@ -89,7 +89,6 @@
             {% else %}
                 <li>日期：{{ expense[5] }}（支）種類：{{ expense[2] }}&nbsp;&nbsp;&nbsp;&nbsp;金額：{{ expense[3]|abs }}&nbsp;&nbsp;&nbsp;&nbsp;備註：{{ expense[4] }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button type="button" onclick="editExpense({{ expense[0] }})">編輯</button>&nbsp;&nbsp;&nbsp;<button type="submit" onclick="deleteExpense({{ expense[0] }})">刪除</button>
                 </li></li>
->>>>>>> 3f2e471f624ebba372f2e92b47f3600c645a8ec0
             {% endif %}
         {% endfor %}
     </ul>
