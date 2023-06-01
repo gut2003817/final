@@ -119,14 +119,13 @@ def expense():
             amount = abs(amount)
         else:
             amount = -abs(amount)
-        # 將記帳資訊儲存到資料庫，這裡使用SQLite作為範例
+        # 將記帳資訊儲存到資料庫
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
             cursor.execute('INSERT INTO expenses (username, category, note, amount, date, budget) VALUES (?, ?, ?, ?, ?, ?)',
                            (session['username'], category, note, amount,date_today, budget))
             conn.commit()
 
-            # Fetch all expenses for the user from the database
             cursor.execute('SELECT * FROM expenses WHERE username = ? ORDER BY date', (session['username'],))
             expenses = cursor.fetchall()
 
@@ -150,11 +149,10 @@ def expense():
         cursor.execute('SELECT * FROM expenses WHERE username = ? ORDER BY date', (session['username'],))
         expenses = cursor.fetchall()
 
-        # 打印调试信息
         print('Expenses:', expenses)
 
         # 計算月總額和損益
-        total_amount = sum(expense[3] for expense in expenses)
+        expense = sum(expense[3] for expense in expenses if expense[3] < 0)
         profit_loss = calculate_profit_loss(expenses)
         # 排序支出記錄
         category = request.args.get('category')  # 從URL參數獲取用戶選擇的分類
@@ -176,7 +174,7 @@ def expense():
         if 'category' not in columns:
             cursor.execute('ALTER TABLE expenses ADD COLUMN category TEXT')  # 添加 category 欄位
 
-    return render_template('expense.html', expenses=expenses, total_amount=total_amount, profit_loss=profit_loss, budget=budget)
+    return render_template('expense.html', expenses=expenses, expense=expense, profit_loss=profit_loss, budget=budget)
 
 # 路由: 編輯記帳項目
 @app.route('/edit_expense/<int:expense_id>', methods=['GET', 'POST'])
@@ -226,12 +224,9 @@ def report():
     print('Expenses:', expenses)
 
     # 計算月總額和損益
-    total_amount = sum(expense[3] for expense in expenses)
     income = sum(expense[3] for expense in expenses if expense[3] >= 0)
     expense = sum(expense[3] for expense in expenses if expense[3] < 0)
 
-    # 打印调试信息
-    print('Total Amount:', total_amount)
     print('Income:', income)
     print('Expense:', expense)
     return render_template('report.html', expenses=expenses, total_amount=total_amount, income=income, expense=expense)
