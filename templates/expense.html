@@ -2,6 +2,29 @@
 <html>
 <head>
     <title>簡易記帳</title>
+    <style>
+            .flash-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            z-index: 9999;
+        }
+
+        .flash-message p {
+            margin: 0;
+            padding: 5px 10px;
+        }
+
+        .hide-flash {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <h1>簡易記帳</h1>
@@ -42,6 +65,15 @@
         <br><br>
         
         <input type="submit" value="新增">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-message">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
     </form>
 
     
@@ -49,21 +81,19 @@
     
     <h2>月總額: {{ total_amount }}</h2>
     <h2>損益: {{ profit_loss }}</h2>
-    {% if budget %}
-    <label for="budget">預算金額：{{ budget }}</label>
-    <br>
-    {% endif %}
-    
     <h3>記帳紀錄:</h3>
     <ul>
         {% for expense in expenses %}
-            {% if expense[3] >= 0 %}
-                <li>日期：{{ expense[5] }}（收）&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;金額：{{ expense[3] }}&nbsp;&nbsp;&nbsp;&nbsp;備註：{{ expense[4] }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/edit_expense/{{ expense[0] }}">點一下編輯</a></li>
-            {% else %}
-                <li>日期：{{ expense[5] }}（支）種類：{{ expense[2] }}&nbsp;&nbsp;&nbsp;&nbsp;金額：{{ expense[3]|abs }}&nbsp;&nbsp;&nbsp;&nbsp;備註：{{ expense[4] }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/edit_expense/{{ expense[0] }}">點一下編輯</a></li>
+            {% if expense[3] != 0 %}
+                {% if expense[3] >= 0 %}
+                    <li>日期：{{ expense[5] }}（收）&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;金額：{{ expense[3] }}&nbsp;&nbsp;&nbsp;&nbsp;備註：{{ expense[4] }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/edit_expense/{{ expense[0] }}">點一下編輯</a></li>
+                {% else %}
+                    <li>日期：{{ expense[5] }}（支）種類：{{ expense[2] }}&nbsp;&nbsp;&nbsp;&nbsp;金額：{{ expense[3]|abs }}&nbsp;&nbsp;&nbsp;&nbsp;備註：{{ expense[4] }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/edit_expense/{{ expense[0] }}">點一下編輯</a></li>
+                {% endif %}
             {% endif %}
         {% endfor %}
     </ul>
+    
     
     <script>
         // JavaScript 部分：根據選擇的類型，顯示或隱藏種類選項
@@ -77,6 +107,15 @@
                 categoryDiv.style.display = "none";
             }
         });
+        document.addEventListener('DOMContentLoaded', function() {
+        var flashMessage = document.querySelector('.flash-message');
+        if (flashMessage) {
+            flashMessage.classList.remove('hide-flash');
+            setTimeout(function() {
+                flashMessage.classList.add('hide-flash');
+            }, 3000); // 顯示時間為3秒後自動隱藏
+        }
+    });
     </script>
     <a href="/advanced"><h3>進階功能<h3><a>
     <a href="/logout"><h6>登出<h6></a>

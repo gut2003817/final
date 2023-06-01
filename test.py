@@ -119,7 +119,6 @@ def expense():
             amount = abs(amount)
         else:
             amount = -abs(amount)
-
         # 將記帳資訊儲存到資料庫，這裡使用SQLite作為範例
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
@@ -127,12 +126,24 @@ def expense():
                            (session['username'], category, note, amount,date_today, budget))
             conn.commit()
 
+            # Fetch all expenses for the user from the database
+            cursor.execute('SELECT * FROM expenses WHERE username = ? ORDER BY date', (session['username'],))
+            expenses = cursor.fetchall()
+
+            # 檢查支出是否超過預算
+            category_budgets = get_category_budgets(session['username'])
+            budget_exceeded = is_budget_exceeded(category, expenses, category_budgets)
+
+            if budget_exceeded:
+                flash('您的支出已超過預算金額！')
+            else:
+                flash('記帳成功！')
+
             # 打印调试信息
         print('Category:', category)
         print('Note:', note)
         print('Amount:', amount)
         print('Date:', date_today)
-
     # 從資料庫中獲取使用者的所有記帳資料
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
@@ -155,6 +166,7 @@ def expense():
         cursor.execute('SELECT budget FROM expenses WHERE username = ? AND budget IS NOT NULL', (session['username'],))
         budget_result = cursor.fetchone()
         budget = budget_result[0] if budget_result else None
+
 
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
@@ -233,34 +245,59 @@ def advanced():
 
     # 獲取支出類別佔比及預算數值
     categorized_expenses, category_budgets = get_expenses_and_budgets()
-    all_categories = [expense[0] for expense in categorized_expenses]
+    all_categories = list(category_budgets.keys())
 
-    return render_template('advanced.html', categorized_expenses=categorized_expenses, category_budgets=category_budgets, all_categories=all_categories)
+    # 檢查每個類別的支出是否超過預算
+    budget_exceeded = {category: is_budget_exceeded(category, categorized_expenses, category_budgets) for category in all_categories}
 
-# 設定預算的函式
+    return render_template('advanced.html', categorized_expenses=categorized_expenses, category_budgets=category_budgets, all_categories=all_categories, budget_exceeded=budget_exceeded)
+
+
+
+from datetime import datetime
+
 def set_budget(form_data):
-    # 從表單中獲取每個類別的預算數值
-    category_budgets = {}
-    for key, value in form_data.items():
-        if key.startswith('budget_'):
-            category = key.split('_')[1]
-            budget = float(value)
-            category_budgets[category] = budget
+    try:
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
 
-    # 將預算存儲到資料庫中，關聯到當前使用者
-    with sqlite3.connect('database.db') as conn:
-        cursor = conn.cursor()
-        for category, budget in category_budgets.items():
-            cursor.execute('UPDATE expenses SET budget = ? WHERE username = ? AND category = ?', (budget, session['username'], category))
-        conn.commit()
+            # 取得當前日期
+            current_date = datetime.now().strftime('%Y-%m-%d')
 
-    flash('預算已設定成功！')
+            # 刪除使用者現有的預算紀錄
+            cursor.execute('DELETE FROM expenses WHERE username = ? AND CAST(budget AS REAL) > 0', (session['username'],))
+
+            # 插入新的預算紀錄
+            for category, budget in form_data.items():
+                if category.startswith('budget_'):
+                    category = category.split('_')[1]
+                    budget = float(budget)
+                    cursor.execute('INSERT INTO expenses (username, category, amount, budget, date) VALUES (?, ?, 0, ?, ?)',
+                                   (session['username'], category, budget, current_date))
+
+            # 更新預算值到資料庫
+            cursor.execute('UPDATE expenses SET budget = ? WHERE username = ?', (budget, session['username']))
+
+            # 提交交易
+            conn.commit()
+            
+            flash('預算已設定成功！')
+
+    except Exception as e:
+        conn.rollback()  # 發生錯誤時回滾交易
+        flash('設定預算時發生錯誤！請重試。' + str(e))
+
+
+
+
 
 # 獲取支出類別佔比及預算數值的函式
 def get_expenses_and_budgets():
-    # 從資料庫中獲取使用者的所有支出資料
+    # 連接到資料庫
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
+
+        # 獲取使用者的所有支出資料
         cursor.execute('SELECT category, ABS(SUM(amount)) '
                        'FROM expenses '
                        'WHERE username = ? AND amount < 0 '
@@ -272,26 +309,13 @@ def get_expenses_and_budgets():
         # 總支出金額
         total_expenses = sum(expense[1] for expense in categorized_expenses)
 
-    # 從資料庫中獲取使用者的支出類別及預算數值
-    with sqlite3.connect('database.db') as conn:
-        cursor = conn.cursor()
-
-        # 獲取所有類別
-        all_categories = ['食', '衣', '住', '行', '育', '樂']
-
-        # 準備 SQL 查詢的參數
-        query_params = [session['username']] + all_categories
-
-        # 產生 SQL 查詢的佔位符
-        placeholders = ','.join(['?'] * len(all_categories))
-
-        # 查詢使用者的支出類別及預算數值
-        query = f"SELECT category, budget FROM expenses WHERE username = ? AND category IN ({placeholders})"
-        cursor.execute(query, query_params)
-        category_budgets = dict(cursor.fetchall())
+        # 獲取使用者的支出類別及預算數值
+        cursor.execute('SELECT category, budget FROM expenses WHERE username = ?', (session['username'],))
+        category_budgets = dict(list(cursor.fetchall()))
 
     # 處理未出現在支出紀錄中的類別
-    missing_categories = set(all_categories) - set([expense[0] for expense in categorized_expenses])
+    all_categories = ['食', '衣', '住', '行', '育', '樂']
+    missing_categories = set(all_categories) - set(category_budgets.keys())
     for category in missing_categories:
         category_budgets[category] = 0
 
@@ -300,6 +324,39 @@ def get_expenses_and_budgets():
 
     return categorized_expenses, category_budgets
 
+def is_budget_exceeded(category, expenses, category_budgets):
+    # 取得類別的預算金額
+    budget = category_budgets.get(category)
+
+    # 如果預算為 None 或空字串，視為無限預算或跳過比較
+    if budget is None or budget == '':
+        return False
+
+    # 將預算轉換為數字型別
+    budget = float(budget)
+
+    # 取得該類別的總開支
+    category_expenses = [expense[3] for expense in expenses if expense[2] == category]
+    total_expenses = sum(category_expenses)
+
+    # 檢查開支是否超過預算
+    if total_expenses > budget:
+        return True
+    else:
+        return False
+
+
+
+def get_category_budgets(username):
+    # 連接到資料庫
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+
+        # 從資料庫中獲取使用者的預算數值
+        cursor.execute('SELECT category, budget FROM expenses WHERE username = ?', (username,))
+        category_budgets = dict(cursor.fetchall())
+
+    return category_budgets
 
 
 # 路由：使用者登出
