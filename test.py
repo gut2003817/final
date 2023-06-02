@@ -50,7 +50,7 @@ def create_expenses_table():
                    amount REAL NOT NULL,
                    note TEXT,
                    date TEXT NOT NULL,
-                   budget REAL DEFAULT 0)''')
+                   budget REAL DEFAULT 0.0)''')
     conn.commit()
     conn.close()
 
@@ -410,4 +410,4 @@ def logout():
     return redirect('/homepage')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0",port=5001)
