@@ -60,13 +60,14 @@
 
     <h2>設定必要支出預算</h2>
     <form action="/advanced" method="POST">
-        {% for category in all_categories %}
-        <label for="budget_{{ category }}">類別：{{ category }}，預算金額：</label>
-        <input type="number" id="budget_{{ category }}" name="budget_{{ category }}" step="0.01" value="{{ category_budgets.get(category) }}" required>
+        {% for category, budget in category_budgets.items() %}
+        <label>類別：{{ category }}，預算金額：</label>
+        <input type="number" id="budget_{{ category }}" name="budget_{{ category }}" step="0.01" value="{{ budget }}" required>
         <br>
         {% endfor %}
         <button type="submit" name="set_budget">設定</button>
-    </form>
+      </form>      
+      
     {% with messages = get_flashed_messages() %}
         {% if messages %}
             <div class="flash-message">

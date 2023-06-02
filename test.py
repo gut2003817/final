@@ -49,15 +49,25 @@ def create_expenses_table():
                    category TEXT NOT NULL,
                    amount REAL NOT NULL,
                    note TEXT,
-                   date TEXT NOT NULL,
-                   budget REAL DEFAULT 0.0)''')
+                   date TEXT NOT NULL)''')
     conn.commit()
     conn.close()
 
+def create_default_expenses_table():
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS default_expenses
+                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                       username TEXT NOT NULL,
+                       category TEXT NOT NULL,
+                       budget REAL NOT NULL)''')
+    conn.commit()
+    conn.close()
 
 # 執行資料表建立
 create_users_table()
 create_expenses_table()
+create_default_expenses_table()
 
 # 路由：使用者註冊
 @app.route('/register', methods=['GET', 'POST'])
@@ -120,7 +130,6 @@ def expense():
         amount = float(request.form['amount'])
         record_type = request.form['record_type']
         date_today = request.form['date']  
-        budget = request.form.get('budget')
         
         # 根據記錄類型設置金額正負號
         if record_type == 'income':
@@ -131,8 +140,8 @@ def expense():
         # 將記帳資訊儲存到資料庫
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
-            cursor.execute('INSERT INTO expenses (username, category, note, amount, date, budget) VALUES (?, ?, ?, ?, ?, ?)',
-                           (session['username'], category, note, amount,date_today, budget))
+            cursor.execute('INSERT INTO expenses (username, category, note, amount, date) VALUES (?, ?, ?, ?, ?)',
+                           (session['username'], category, note, amount,date_today))
             conn.commit()
 
             cursor.execute('SELECT * FROM expenses WHERE username = ? ORDER BY date', (session['username'],))
@@ -141,7 +150,8 @@ def expense():
             # 檢查支出是否超過預算
             category_budgets = get_category_budgets(session['username'])
             budget_exceeded = is_budget_exceeded(category, expenses, category_budgets)
-
+            print(budget_exceeded)
+            print(category_budgets)
             if budget_exceeded:
                 flash('您的支出已超過預算金額！')
             else:
@@ -170,20 +180,13 @@ def expense():
 
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT budget FROM expenses WHERE username = ? AND budget IS NOT NULL', (session['username'],))
-        budget_result = cursor.fetchone()
-        budget = budget_result[0] if budget_result else None
-
-
-    with sqlite3.connect('database.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute('PRAGMA table_info(expenses)')  # 獲取資料表結構
+        cursor.execute('PRAGMA table_info(expenses)')
         columns = [column[1] for column in cursor.fetchall()]
 
         if 'category' not in columns:
             cursor.execute('ALTER TABLE expenses ADD COLUMN category TEXT')  # 添加 category 欄位
 
-    return render_template('expense.html', expenses=expenses, expense=expense, profit_loss=profit_loss, budget=budget)
+    return render_template('expense.html', expenses=expenses, expense=expense, profit_loss=profit_loss)
 
 # 路由: 編輯記帳項目
 @app.route('/edit_expense/<int:expense_id>', methods=['GET', 'POST'])
@@ -216,35 +219,11 @@ def delete_expense(expense_id):
         conn.commit()
     return redirect('/expense')
 
-
-# 路由：統計報表
-@app.route('/report')
-def report():
-    if 'username' not in session:
-        return redirect('/login')
-
-    # 從資料庫中獲取使用者的所有記帳資料
-    with sqlite3.connect('database.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM expenses WHERE username = ? ORDER BY date(date)', (session['username'],))
-        expenses = cursor.fetchall()
-
-    # 打印调试信息
-    print('Expenses:', expenses)
-
-    # 計算月總額和損益
-    income = sum(expense[3] for expense in expenses if expense[3] >= 0)
-    expense = sum(expense[3] for expense in expenses if expense[3] < 0)
-
-    print('Income:', income)
-    print('Expense:', expense)
-    return render_template('report.html', expenses=expenses, income=income, expense=expense)
-
 # 計算損益
 def calculate_profit_loss(expenses_data):
-    income = sum(expense[3] for expense in expenses_data if expense[3] >= 0)
+    income = sum(expense[3] for expense in expenses_data if expense[3] > 0)
     expenses = sum(expense[3] for expense in expenses_data if expense[3] < 0)
-    return income - abs(expenses)
+    return income + expenses
 
 # 路由：進階功能
 @app.route('/advanced', methods=['GET', 'POST'])
@@ -258,12 +237,11 @@ def advanced():
 
     # 獲取支出類別佔比及預算數值
     categorized_expenses, category_budgets = get_expenses_and_budgets()
-    all_categories = list(category_budgets.keys())
+    category_budgets = get_category_budgets(session['username'])
+    all_categories = ['食', '衣', '住', '行', '育', '樂']
 
-    # 檢查每個類別的支出是否超過預算
-    budget_exceeded = {category: is_budget_exceeded(category, categorized_expenses, category_budgets) for category in all_categories}
+    return render_template('advanced.html', categorized_expenses=categorized_expenses, category_budgets=category_budgets, all_categories=all_categories)
 
-    return render_template('advanced.html', categorized_expenses=categorized_expenses, category_budgets=category_budgets, all_categories=all_categories, budget_exceeded=budget_exceeded)
 
 
 
@@ -277,19 +255,18 @@ def set_budget(form_data):
             # 取得當前日期
             current_date = datetime.now().strftime('%Y-%m-%d')
 
-            # 刪除使用者現有的預算紀錄
-            cursor.execute('DELETE FROM expenses WHERE username = ? AND CAST(budget AS REAL) > 0', (session['username'],))
-
-            # 插入新的預算紀錄
+            # 插入預算紀錄
             for category, budget in form_data.items():
                 if category.startswith('budget_'):
                     category = category.split('_')[1]
-                    budget = float(budget)
-                    cursor.execute('INSERT INTO expenses (username, category, amount, budget, date) VALUES (?, ?, 0, ?, ?)',
-                                   (session['username'], category, budget, current_date))
+                    budget = budget
+                    cursor.execute('INSERT INTO default_expenses (username, category, budget) VALUES (?, ?, ?)',
+                                  (session['username'], category, budget))
+                print(budget)
 
-            # 更新預算值到資料庫
-            cursor.execute('UPDATE expenses SET budget = ? WHERE username = ?', (budget, session['username']))
+            # # 更新預算值到資料庫
+            # cursor.execute('UPDATE default_expenses SET budget = ? WHERE username = ?', (budget, session['username']))
+
 
             # 提交交易
             conn.commit()
@@ -323,14 +300,8 @@ def get_expenses_and_budgets():
         total_expenses = sum(expense[1] for expense in categorized_expenses)
 
         # 獲取使用者的支出類別及預算數值
-        cursor.execute('SELECT category, budget FROM expenses WHERE username = ?', (session['username'],))
+        cursor.execute('SELECT category, budget FROM default_expenses')
         category_budgets = dict(list(cursor.fetchall()))
-
-    # 處理未出現在支出紀錄中的類別
-    all_categories = ['食', '衣', '住', '行', '育', '樂']
-    missing_categories = set(all_categories) - set(category_budgets.keys())
-    for category in missing_categories:
-        category_budgets[category] = 0
 
     # 計算支出類別佔比
     categorized_expenses = [(expense[0], expense[1], round(expense[1] / total_expenses * 100, 2)) for expense in categorized_expenses]
@@ -338,26 +309,26 @@ def get_expenses_and_budgets():
     return categorized_expenses, category_budgets
 
 def is_budget_exceeded(category, expenses, category_budgets):
-    # 取得類別的預算金額
+    # 查找指定類別的預算金額
     budget = category_budgets.get(category)
 
-    # 如果預算為 None 或空字串，視為無限預算或跳過比較
     if budget is None or budget == '':
         return False
 
-    # 將預算轉換為數字型別
+    if category not in [expense[2] for expense in expenses]:
+        return False
+
     budget = float(budget)
 
-    # 取得該類別的總開支
-    category_expenses = [expense[3] for expense in expenses if expense[2] == category]
-    total_expenses = sum(category_expenses)
+    for expense in expenses :
+        if expense[2] == category:
+            category_expenses = expense[3]
 
     # 檢查開支是否超過預算
-    if total_expenses > budget:
+    if category_expenses > budget:
         return True
     else:
         return False
-
 
 
 def get_category_budgets(username):
@@ -366,7 +337,7 @@ def get_category_budgets(username):
         cursor = conn.cursor()
 
         # 從資料庫中獲取使用者的預算數值
-        cursor.execute('SELECT category, budget FROM expenses WHERE username = ?', (username,))
+        cursor.execute('SELECT category, budget FROM default_expenses WHERE username = ?',(session['username'],))
         category_budgets = dict(cursor.fetchall())
 
     return category_budgets
@@ -389,7 +360,7 @@ def export():
     worksheet = workbook.add_worksheet()
 
     # 寫入標題列
-    headers = ['ID', 'Username', 'Category', 'Amount', 'Note', 'Date', 'Budget']
+    headers = ['ID', 'Username', 'Category', 'Amount', 'Note', 'Date']
     for col, header in enumerate(headers):
         worksheet.write(0, col, header)
 
