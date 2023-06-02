@@ -91,16 +91,21 @@
                 </li></li>
             {% endif %}
         {% endfor %}
+        <button type="button" onclick="exportToExcel()">匯出 Excel</button>
     </ul>
     
-    
+
     <script>
         function editExpense(expenseId) {
-            // 導航到編輯頁面
             window.location.href = "/edit_expense/" + expenseId;
         }
     </script>
     
+    <script>
+        function exportToExcel() {
+            window.location.href = "/export";
+        }
+    </script>
 
     <script>
         function deleteExpense(expenseId) {

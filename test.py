@@ -1,5 +1,7 @@
-from flask import Flask,flash, render_template, request, redirect, session
+from flask import Flask,flash, render_template, request, redirect, session, send_file
 import sqlite3
+import xlsxwriter
+import pandas as pd
 from datetime import date
 
 app = Flask(__name__)
@@ -234,7 +236,7 @@ def report():
 
     print('Income:', income)
     print('Expense:', expense)
-    return render_template('report.html', expenses=expenses, total_amount=total_amount, income=income, expense=expense)
+    return render_template('report.html', expenses=expenses, income=income, expense=expense)
 
 # 計算損益
 def calculate_profit_loss(expenses_data):
@@ -366,6 +368,39 @@ def get_category_budgets(username):
         category_budgets = dict(cursor.fetchall())
 
     return category_budgets
+
+
+# 匯出記帳資料到 Excel
+@app.route('/export', methods=['GET'])
+def export():
+    if 'username' not in session:
+        return redirect('/login')
+
+    # 獲取使用者的所有記帳資料
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM expenses WHERE username = ? ORDER BY date', (session['username'],))
+        expenses = cursor.fetchall()
+
+    # 創建 Excel 檔案
+    workbook = xlsxwriter.Workbook('expenses.xlsx')
+    worksheet = workbook.add_worksheet()
+
+    # 寫入標題列
+    headers = ['ID', 'Username', 'Category', 'Amount', 'Note', 'Date', 'Budget']
+    for col, header in enumerate(headers):
+        worksheet.write(0, col, header)
+
+    # 寫入資料
+    for row, expense in enumerate(expenses):
+        for col, data in enumerate(expense):
+            worksheet.write(row + 1, col, data)
+
+    # 關閉 Excel 檔案
+    workbook.close()
+
+    # 下載 Excel 檔案
+    return send_file('expenses.xlsx', as_attachment=True)
 
 
 # 路由：使用者登出
