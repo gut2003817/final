@@ -119,11 +119,13 @@ def expense():
         note = request.form['note']
         amount = float(request.form['amount'])
         record_type = request.form['record_type']
-        date_today = request.form['date']   # 取得選擇日期
+        date_today = request.form['date']  
         budget = request.form.get('budget')
+        
         # 根據記錄類型設置金額正負號
         if record_type == 'income':
             amount = abs(amount)
+            category = '收入'
         else:
             amount = -abs(amount)
         # 將記帳資訊儲存到資料庫
