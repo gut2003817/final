@@ -60,13 +60,28 @@
 
     <h2>設定必要支出預算</h2>
     <form action="/advanced" method="POST">
-        {% for category, budget in category_budgets.items() %}
-        <label>類別：{{ category }}，預算金額：</label>
-        <input type="number" id="budget_{{ category }}" name="budget_{{ category }}" step="0.01" value="{{ budget }}" required>
-        <br>
-        {% endfor %}
-        <button type="submit" name="set_budget">設定</button>
-      </form>      
+        <form action="/advanced" method="POST">
+            <label>類別：食，預算金額：</label>
+            <input type="number" id="budget_食" name="budget_食" step="0.01" value="{{ category_budgets.get('食', 0) }}" required>
+            <br>
+            <label>類別：衣，預算金額：</label>
+            <input type="number" id="budget_衣" name="budget_衣" step="0.01" value="{{ category_budgets.get('衣', 0) }}" required>
+            <br>
+            <label>類別：住，預算金額：</label>
+            <input type="number" id="budget_住" name="budget_住" step="0.01" value="{{ category_budgets.get('住', 0) }}" required>
+            <br>
+            <label>類別：行，預算金額：</label>
+            <input type="number" id="budget_行" name="budget_行" step="0.01" value="{{ category_budgets.get('行', 0) }}" required>
+            <br>
+            <label>類別：育，預算金額：</label>
+            <input type="number" id="budget_育" name="budget_育" step="0.01" value="{{ category_budgets.get('育', 0) }}" required>
+            <br>
+            <label>類別：樂，預算金額：</label>
+            <input type="number" id="budget_樂" name="budget_樂" step="0.01" value="{{ category_budgets.get('樂', 0) }}" required>
+            <br>
+            <button type="submit" name="set_budget">設定</button>
+        </form>
+             
       
     {% with messages = get_flashed_messages() %}
         {% if messages %}

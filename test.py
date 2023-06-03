@@ -238,9 +238,8 @@ def advanced():
     # 獲取支出類別佔比及預算數值
     categorized_expenses, category_budgets = get_expenses_and_budgets()
     category_budgets = get_category_budgets(session['username'])
-    all_categories = ['食', '衣', '住', '行', '育', '樂']
 
-    return render_template('advanced.html', categorized_expenses=categorized_expenses, category_budgets=category_budgets, all_categories=all_categories)
+    return render_template('advanced.html', categorized_expenses=categorized_expenses, category_budgets=category_budgets)
 
 
 
@@ -319,13 +318,13 @@ def is_budget_exceeded(category, expenses, category_budgets):
         return False
 
     budget = float(budget)
-
+    category_expenses = 0.0
     for expense in expenses :
         if expense[2] == category:
-            category_expenses = expense[3]
+            category_expenses += expense[3]
 
     # 檢查開支是否超過預算
-    if category_expenses > budget:
+    if abs(category_expenses) > budget:
         return True
     else:
         return False
