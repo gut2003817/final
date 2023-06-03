@@ -24,6 +24,10 @@
         .hide-flash {
             display: none;
         }
+
+        .warning-message {
+            color: red;
+        }
     </style>
 </head>
 <body>
@@ -32,6 +36,7 @@
     <form method="POST" action="/expense">
         <label for="date">日期:</label>
         <input type="date" id="date" name="date">
+        <span id="date-warning" class="text-danger" style="display: none;">日期為必填欄位!請選擇日期</span>
         <label for="record_type">類型:</label>
         <select id="record_type" name="record_type">
             <option value="income">收入</option>
@@ -61,6 +66,8 @@
         
         <label for="amount">金額:</label>
         <input type="number" id="amount" name="amount">
+        <span id="amount-warning" class="text-danger" style="display: none;">金額為必填欄位!請輸入金額</span>
+    
         
         <br><br>
         
@@ -143,6 +150,43 @@
         }
     });
     </script>
+
+
+<script>
+    document.querySelector('form').addEventListener('submit', function(event) {
+        var dateInput = document.getElementById('date');
+        var amountInput = document.getElementById('amount');
+        var dateWarning = document.getElementById('date-warning');
+        var amountWarning = document.getElementById('amount-warning');
+
+        var isValid = true;
+
+        if (!dateInput.value) {
+            dateWarning.style.display = 'block';
+            dateWarning.classList.add('warning-message'); // 新增 'warning-message' 類別
+            isValid = false;
+        } else {
+            dateWarning.style.display = 'none';
+            dateWarning.classList.remove('warning-message'); // 移除 'warning-message' 類別
+        }
+
+        if (!amountInput.value) {
+            amountWarning.style.display = 'block';
+            amountWarning.classList.add('warning-message'); 
+            isValid = false;
+        } else {
+            amountWarning.style.display = 'none';
+            amountWarning.classList.remove('warning-message');
+        }
+
+        if (!isValid) {
+            event.preventDefault(); // 阻止表單的預設提交行為
+        }
+    });
+</script>
+
+
+    
     <a href="/advanced"><h3>進階功能</h3><a>
     <a href="/logout"><h6>登出</h6></a>
 </body>
