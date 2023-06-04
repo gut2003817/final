@@ -3,7 +3,18 @@
 <head>
     <title>簡易記帳</title>
     <style>
-            .flash-message {
+        body {
+            background-color: #e1f5fe;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            background-color: #4b959b;
+            padding: 10px;
+        }
+
+        .flash-message {
             position: fixed;
             top: 50%;
             left: 50%;
@@ -27,6 +38,69 @@
 
         .warning-message {
             color: red;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #4b959b
+            border: none;
+            color: #4b959b;
+            padding: 5px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 12px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #4b959b;
+            color: white;
+
+        }
+
+        .export-button {
+            margin-top: 20px;
+        }
+
+        a {
+            color: #4b959b;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        h3 {
+            margin-top: 20px;
+        }
+
+        input[type="date"],
+        input[type="number"],
+        select,
+        input[type="text"] {
+            width: 200px;
+            padding: 5px;
+            border-radius: 3px;
+            border: 1px solid #ccc;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -71,7 +145,8 @@
         
         <br><br>
         
-        <input type="submit" value="新增">
+        
+        <button type="submit" id="add-button">新增</button>
         {% with messages = get_flashed_messages() %}
         {% if messages %}
             <div class="flash-message">
