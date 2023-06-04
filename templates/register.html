@@ -61,6 +61,10 @@
         <label for="password">密碼:</label>
         <input type="password" id="password" name="password"><br>
         <input type="submit" name="submit" value="註冊">
+        {% if message %}
+        <p>{{ message }}</p>
+        {% endif %}
+    <h5>註冊過了嗎？<a href="/login">前往登入</a></h5>
     </form>
 </body>
 </html>

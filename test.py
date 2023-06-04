@@ -83,11 +83,12 @@ def register():
         # 檢查帳號是否已存在於資料庫
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
-            cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
-            existing_user = cursor.fetchone()
-
-            if existing_user:
-                return render_template('register.html', message='帳號已存在')
+            cursor.execute('SELECT username From users WHERE username = ?', (username,))
+            existing_username = cursor.fetchone()
+            existing_password = cursor.fetchone()
+            
+            if existing_username is not None or existing_password is not None:
+                return render_template('register.html', message='帳號或密碼已註冊過！')
 
             # 將使用者資訊儲存到資料庫
             cursor.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, password))
@@ -300,6 +301,7 @@ def get_expenses_and_budgets():
 
     # 計算支出類別佔比
     categorized_expenses = [(expense[0], expense[1], round(expense[1] / total_expenses * 100, 2)) for expense in categorized_expenses]
+    categorized_expenses = sorted(categorized_expenses, key=lambda x: x[1], reverse=True)
 
     return categorized_expenses, category_budgets
 
@@ -308,12 +310,12 @@ def is_budget_exceeded(category, expenses, category_budgets):
     # 查找指定類別的預算金額
     budget = category_budgets.get(category)
 
-    if budget is None or budget == '':
+    if budget == 0.0 or budget == '':
         return False
 
-    if category not in [expense[2] for expense in expenses]:
+    if category not in [expense[2] for expense in expenses] :
         return False
-
+    
     budget = float(budget)
     category_expenses = 0.0
     for expense in expenses :
