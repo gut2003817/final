@@ -148,7 +148,7 @@ def expense():
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
             cursor.execute('INSERT INTO expenses (username, category, note, amount, date) VALUES (?, ?, ?, ?, ?)',
-                           (session['username'], category, note, amount,date_today))
+                           (session['username'], category, note, amount, date_today))
             conn.commit()
 
             cursor.execute('SELECT * FROM expenses WHERE username = ? ORDER BY date', (session['username'],))
@@ -196,6 +196,23 @@ def expense():
     return render_template('expense.html', expenses=expenses, expense=expense, profit_loss=profit_loss)
 
 
+# 路由：進階功能
+@app.route('/advanced', methods=['GET', 'POST'])
+def advanced():
+    if 'username' not in session:
+        return redirect('/login')
+
+    if request.method == 'POST':
+        if 'set_budget' in request.form:
+            set_budget(request.form)
+
+    # 獲取支出類別佔比及預算數值
+    categorized_expenses, category_budgets = get_expenses_and_budgets()
+    category_budgets = get_category_budgets(session['username'])
+
+    return render_template('advanced.html', categorized_expenses=categorized_expenses, category_budgets=category_budgets)
+
+
 # 路由: 編輯記帳項目
 @app.route('/edit_expense/<int:expense_id>', methods=['GET', 'POST'])
 def edit_expense(expense_id):
@@ -234,23 +251,6 @@ def calculate_profit_loss(expenses_data):
     income = sum(expense[3] for expense in expenses_data if expense[3] > 0)
     expenses = sum(expense[3] for expense in expenses_data if expense[3] < 0)
     return income + expenses
-
-
-# 路由：進階功能
-@app.route('/advanced', methods=['GET', 'POST'])
-def advanced():
-    if 'username' not in session:
-        return redirect('/login')
-
-    if request.method == 'POST':
-        if 'set_budget' in request.form:
-            set_budget(request.form)
-
-    # 獲取支出類別佔比及預算數值
-    categorized_expenses, category_budgets = get_expenses_and_budgets()
-    category_budgets = get_category_budgets(session['username'])
-
-    return render_template('advanced.html', categorized_expenses=categorized_expenses, category_budgets=category_budgets)
 
 
 #設定預算
@@ -308,15 +308,16 @@ def get_expenses_and_budgets():
 
 def is_budget_exceeded(category, expenses, category_budgets):
     # 查找指定類別的預算金額
-    budget = category_budgets.get(category)
-
+    budget = category_budgets.get(category) 
+    budget = float(budget)if budget is not None else 0
+    
     if budget == 0.0 or budget == '':
         return False
 
     if category not in [expense[2] for expense in expenses] :
         return False
     
-    budget = float(budget)
+    
     category_expenses = 0.0
     for expense in expenses :
         if expense[2] == category:
@@ -379,6 +380,7 @@ def export():
 def logout():
     session.pop('username', None)
     return redirect('/homepage')
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0",port=5001)
