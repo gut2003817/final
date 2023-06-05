@@ -1,8 +1,6 @@
 from flask import Flask,flash, render_template, request, redirect, session, send_file
 import sqlite3
 import xlsxwriter
-import pandas as pd
-from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
@@ -310,7 +308,7 @@ def is_budget_exceeded(category, expenses, category_budgets):
     # 查找指定類別的預算金額
     budget = category_budgets.get(category) 
     budget = float(budget)if budget is not None else 0
-    
+
     if budget == 0.0 or budget == '':
         return False
 
